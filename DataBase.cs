@@ -68,13 +68,13 @@
         /// </summary>
         /// <typeparam name="TEntity">Сущность</typeparam>
         /// <returns>Возвращает коллекцию элементов из TEnity</returns>
-        public IEnumerable<TEntity> FillEntity<TEntity>()
+        public Table<TEntity> FillEntity<TEntity>()
             where TEntity : class, new()
         {
             var attrManager = new AttributeManager<TEntity>(typeof(TEntity));
             //получаем имя сущности
             string tableName   = attrManager.GetClassAttributeValue<TableAttribute, String>(a => (a as TableAttribute).Name);
-           // var columns     = attrManager.GetPropertyAttributeValues<ColumnAttribute, string>(a => (a as ColumnAttribute).Name).ToList();
+            // var columns     = attrManager.GetPropertyAttributeValues<ColumnAttribute, string>(a => (a as ColumnAttribute).Name).ToList();
             //колллекция для хранения сущностей
             List<TEntity> entities = new List<TEntity>();
 
@@ -117,7 +117,7 @@
                     }
                 }
             }
-            return entities;   
+            return new Table<TEntity>(entities);   
         }
 
         #endregion

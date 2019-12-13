@@ -5,7 +5,7 @@ using System.Text;
 namespace LoliSQLLib.DataAttributes
 {
     /// <summary>
-    /// Столец из БД
+    /// Столбец из БД
     /// </summary>
     [AttributeUsage(AttributeTargets.Property)]
     public class ColumnAttribute : System.Attribute
@@ -24,8 +24,7 @@ namespace LoliSQLLib.DataAttributes
         /// <summary>
         /// Автоинкримент
         /// </summary>
-        public bool IsIndetity { get; set; }
-
+        public bool IsIndentity { get; set; }
         #endregion
     }
 }
