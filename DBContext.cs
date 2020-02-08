@@ -42,9 +42,9 @@ namespace LoliSQLLib
         /// </summary>
         public void Dispose()
         {
+
         }
         #endregion
-
 
         #region Public Methods
         /// <summary>
