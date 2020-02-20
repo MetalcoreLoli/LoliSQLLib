@@ -64,7 +64,7 @@
             }
         }
 
-          /// <summary>
+        /// <summary>
         /// Выполняет запрос к базе данных
         /// </summary>
         /// <param name="command">Текст запроса</param>
@@ -76,13 +76,13 @@
             {
                 await _sqlConnection.OpenAsync();
                 using (SqlCommand cmd = new SqlCommand(query, _sqlConnection))
-                   await cmd.ExecuteNonQueryAsync();
+                    await cmd.ExecuteNonQueryAsync();
             }
         }
 
         public void Dispose()
         {
-            
+
         }
 
         /// <summary>
@@ -93,56 +93,10 @@
         public Table<TEntity> FillEntity<TEntity>()
             where TEntity : class, new()
         {
-            var attrManager = new AttributeManager<TEntity>(typeof(TEntity));
-            //получаем имя сущности
-            string tableName   = attrManager.GetClassAttributeValue<TableAttribute, String>(a => (a as TableAttribute).Name);
-            // var columns     = attrManager.GetPropertyAttributeValues<ColumnAttribute, string>(a => (a as ColumnAttribute).Name).ToList();
-            //колллекция для хранения сущностей
-            List<TEntity> entities = new List<TEntity>();
-
-            //создаем подключение к базе данных
-            using (_sqlConnection = new SqlConnection(_connectionString))
-            {
-                //открываем подключение
-                _sqlConnection.Open();
-                
-                //создаем объект для хранения запроса
-                using (SqlCommand cmd = new SqlCommand())
-                {
-                    //занесение в свойство CommandText текст T-SQL запроса
-                    cmd.CommandText = $"select * from {tableName}";
-
-                    //занесение в свойство Connection подключение к базеданных
-                    cmd.Connection = _sqlConnection;
-
-                    //создание объекта для чтения 
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        //чтении данных из бд
-                        while (reader.Read())
-                        {
-                            //создание сущности
-                            TEntity entity = new TEntity();
-
-                            //заполнение свойст сущности, которые помеченны соответствующими аттрибутами
-                            foreach (PropertyInfo prop in typeof(TEntity).GetProperties())
-                            {
-                                //получение имяни столбца
-                                string columnName = (prop.GetCustomAttribute(typeof(ColumnAttribute)) as ColumnAttribute).Name;
-
-                                //заполнение свойства сущности
-                                prop.SetValue(entity, reader[columnName]);
-                            }
-                            //добавление в коллекцию сущностей
-                            entities.Add(entity);
-                        }
-                    }
-                }
-            }
-            return new Table<TEntity>(entities);   
+            return FillEntityAsync<TEntity>().Result;
         }
 
-         /// <summary>
+        /// <summary>
         /// Заполняет сущность данными из базы данных
         /// </summary>
         /// <typeparam name="TEntity">Сущность</typeparam>
@@ -152,7 +106,7 @@
         {
             var attrManager = new AttributeManager<TEntity>(typeof(TEntity));
             //получаем имя сущности
-            string tableName   = attrManager.GetClassAttributeValue<TableAttribute, String>(a => (a as TableAttribute).Name);
+            string tableName = attrManager.GetClassAttributeValue<TableAttribute, String>(a => (a as TableAttribute).Name);
             // var columns     = attrManager.GetPropertyAttributeValues<ColumnAttribute, string>(a => (a as ColumnAttribute).Name).ToList();
             //колллекция для хранения сущностей
             List<TEntity> entities = new List<TEntity>();
@@ -163,7 +117,7 @@
                 //открываем подключение
                 await _sqlConnection.OpenAsync();
 
-                
+
                 //создаем объект для хранения запроса
                 using (SqlCommand cmd = new SqlCommand())
                 {
@@ -197,14 +151,29 @@
                     }
                 }
             }
-            return new Table<TEntity>(entities);   
+            return new Table<TEntity>(entities);
         }
 
 
-       // public Table<TEntity> ExecuteQuery<TEntity>(string query) where TEntity : new()
-        //{
-        //}
-        
+        /// <summary>
+        /// Выполняте запрос Select к базе данных
+        /// </summary>
+        /// <param name="query">запрос</param>
+        /// <typeparam name="TEntity">Сущность</typeparam>
+        /// <returns>Возвращает коллекцию элементов из TEnity</returns>
+        public Table<TEntity> ExecuteQuery<TEntity>(string query) where TEntity : new()
+        {
+            var result = ExecuteQueryAsync<TEntity>(query).Result;
+            return result; 
+        }
+
+
+        /// <summary>
+        /// Выполняте асинхронный запрос Select к базе данных
+        /// </summary>
+        /// <param name="query">запрос</param>
+        /// <typeparam name="TEntity">Сущность</typeparam>
+        /// <returns>Возвращает коллекцию элементов из TEnity</returns>
         public async Task<Table<TEntity>> ExecuteQueryAsync<TEntity>(string query) where TEntity : new()
         {
             Table<TEntity> entities = new Table<TEntity>();
@@ -213,17 +182,17 @@
                 await _sqlConnection.OpenAsync();
                 using (SqlCommand cmd = new SqlCommand())
                 {
-                    cmd.CommandText = query; 
-                    cmd.Connection  = _sqlConnection;
+                    cmd.CommandText = query;
+                    cmd.Connection = _sqlConnection;
                     using (var reader = await cmd.ExecuteReaderAsync())
                     {
-                        while(await reader.ReadAsync()) 
+                        while (await reader.ReadAsync())
                         {
                             TEntity entity = new TEntity();
                             foreach (var prop in typeof(TEntity).GetProperties())
                             {
-                               string columnName = (prop.GetCustomAttribute(typeof(ColumnAttribute)) as ColumnAttribute).Name; 
-                               prop.SetValue(entity, reader[columnName]);
+                                string columnName = (prop.GetCustomAttribute(typeof(ColumnAttribute)) as ColumnAttribute).Name;
+                                prop.SetValue(entity, reader[columnName]);
                             }
                             entities.Add(entity);
                         }
