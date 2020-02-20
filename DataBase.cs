@@ -12,7 +12,7 @@
     /// <summary>
     /// Абстракция описывающая базу данных
     /// </summary>
-    public class DataBase
+    public class DataBase : IDisposable
     {
         #region Private Members
         /// <summary>
@@ -80,7 +80,10 @@
             }
         }
 
-
+        public void Dispose()
+        {
+            
+        }
 
         /// <summary>
         /// Заполняет сущность данными из базы данных
@@ -195,6 +198,39 @@
                 }
             }
             return new Table<TEntity>(entities);   
+        }
+
+
+       // public Table<TEntity> ExecuteQuery<TEntity>(string query) where TEntity : new()
+        //{
+        //}
+        
+        public async Task<Table<TEntity>> ExecuteQueryAsync<TEntity>(string query) where TEntity : new()
+        {
+            Table<TEntity> entities = new Table<TEntity>();
+            using (_sqlConnection = new SqlConnection(_connectionString))
+            {
+                await _sqlConnection.OpenAsync();
+                using (SqlCommand cmd = new SqlCommand())
+                {
+                    cmd.CommandText = query; 
+                    cmd.Connection  = _sqlConnection;
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        while(await reader.ReadAsync()) 
+                        {
+                            TEntity entity = new TEntity();
+                            foreach (var prop in typeof(TEntity).GetProperties())
+                            {
+                               string columnName = (prop.GetCustomAttribute(typeof(ColumnAttribute)) as ColumnAttribute).Name; 
+                               prop.SetValue(entity, reader[columnName]);
+                            }
+                            entities.Add(entity);
+                        }
+                    }
+                }
+            }
+            return entities;
         }
         #endregion
     }

@@ -42,7 +42,7 @@ namespace LoliSQLLib
         /// </summary>
         public void Dispose()
         {
-
+            DataBase.Dispose();
         }
         #endregion
 
